@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>그림 연습 & AI 채점 도우미</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Gowun Dodum / Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Gowun Dodum', 'Inter', sans-serif;
+      background-color: #f8fafc;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* Grid Canvas Pattern */
+    .bg-grid-pattern {
+      background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col bg-slate-50 text-slate-800">
+
+  <!-- Header Header Navigation -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shrink-0 shadow-sm z-10">
+    <div class="flex items-center gap-3">
+      <div class="bg-indigo-500 text-white p-2.5 rounded-2xl shadow-md shadow-indigo-100 flex items-center justify-center">
+        <i class="fa-solid fa-wand-magic-sparkles text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+          그림 연습 & AI 채점 도우미
+          <span class="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full">v2.0</span>
+        </h1>
+        <p class="text-xs text-slate-500">차근차근 실력을 키우는 단계별 스마트 그림 교실</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Grid Toggle Button -->
+      <button id="toggleGridBtn" title="격자 보조선 On/Off" class="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-medium">
+        <i class="fa-solid fa-border-top-left text-slate-500"></i>
+        <span class="hidden sm:inline">격자 보조선</span>
+      </button>
+
+      <!-- API Key Modal Button -->
+      <button id="openApiModalBtn" title="Gemini API 키 설정" class="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-medium">
+        <i class="fa-solid fa-key text-amber-500"></i>
+        <span class="hidden sm:inline">API 키 설정</span>
+      </button>
+
+      <!-- Download README -->
+      <button id="downloadReadmeBtn" title="사용안내서 다운로드" class="p-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 active:scale-95 transition-all flex items-center gap-1.5 text-sm font-medium">
+        <i class="fa-solid fa-file-arrow-down text-emerald-500"></i>
+        <span class="hidden sm:inline">사용안내서</span>
+      </button>
+
+      <!-- AI Grade Button -->
+      <button id="aiGradeBtn" class="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold px-4 py-2.5 rounded-xl shadow-md shadow-indigo-200 active:scale-95 transition-all flex items-center gap-2 text-sm">
+        <i class="fa-solid fa-robot"></i>
+        <span>AI 채점 받기</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+    
+    <!-- Left Toolbar Panel -->
+    <aside class="w-full md:w-80 bg-white border-r border-slate-200 p-4 flex flex-col gap-5 overflow-y-auto shrink-0 shadow-sm z-10">
+      
+      <!-- Step 1: Learning Stage Selection -->
+      <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+        <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 block flex justify-between items-center">
+          <span>🎯 연습 단계 선택</span>
+          <span id="stageBadge" class="text-[11px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-md">1단계 (선명)</span>
+        </label>
+        <div class="grid grid-cols-3 gap-2">
+          <button data-stage="1" class="stage-btn bg-indigo-500 text-white font-semibold py-2 px-1 rounded-xl text-xs shadow-sm hover:shadow transition-all flex flex-col items-center gap-1 border border-indigo-600">
+            <span>1단계</span>
+            <span class="text-[10px] opacity-80">선명하게</span>
+          </button>
+          <button data-stage="2" class="stage-btn bg-white text-slate-600 font-semibold py-2 px-1 rounded-xl text-xs hover:bg-slate-100 transition-all flex flex-col items-center gap-1 border border-slate-200">
+            <span>2단계</span>
+            <span class="text-[10px] opacity-70">흐리게</span>
+          </button>
+          <button data-stage="3" class="stage-btn bg-white text-slate-600 font-semibold py-2 px-1 rounded-xl text-xs hover:bg-slate-100 transition-all flex flex-col items-center gap-1 border border-slate-200">
+            <span>3단계</span>
+            <span class="text-[10px] opacity-70">혼자서!</span>
+          </button>
+        </div>
+        <p id="stageDesc" class="text-xs text-slate-500 mt-2.5 bg-white p-2 rounded-lg border border-slate-100">
+          💡 <strong>1단계:</strong> 밑그림이 잘 보여요. 위에 쓱쓱 따라서 연습해보세요!
+        </p>
+      </div>
+
+      <!-- Step 2: Template Selection -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">🎨 밑그림 주제</label>
+          <button id="randomTemplateBtn" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1">
+            <i class="fa-solid fa-shuffle"></i> 랜덤
+          </button>
+        </div>
+        <div id="templateGrid" class="grid grid-cols-3 gap-2">
+          <!-- Dynamically filled with template buttons -->
+        </div>
+      </div>
+
+      <hr class="border-slate-100">
+
+      <!-- Step 3: Drawing Tools (Color, Size, Eraser) -->
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">✏️ 그리기 도구</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="toolPencil" class="tool-btn active bg-indigo-50 border-2 border-indigo-500 text-indigo-700 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all">
+              <i class="fa-solid fa-pencil"></i> 연필/펜
+            </button>
+            <button id="toolEraser" class="tool-btn bg-white border border-slate-200 text-slate-600 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all">
+              <i class="fa-solid fa-eraser"></i> 지우개
+            </button>
+          </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div>
+          <label class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">🎨 색상 선택</label>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-slate-800 bg-slate-900 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#0f172a"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-red-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#ef4444"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-amber-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#f59e0b"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-emerald-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#10b981"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-sky-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#0284c7"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-indigo-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#6366f1"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-pink-500 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#ec4899"></button>
+            <button class="color-btn w-8 h-8 rounded-full border-2 border-transparent bg-amber-800 shadow-sm transition-transform hover:scale-110 active:scale-95" data-color="#92400e"></button>
+            <input type="color" id="customColorPicker" value="#0f172a" class="w-8 h-8 rounded-full border-0 cursor-pointer overflow-hidden bg-transparent" title="사용자 정의 색상">
+          </div>
+        </div>
+
+        <!-- Line Size Slider -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label class="text-xs font-bold text-slate-500 uppercase tracking-wider">📏 선 굵기</label>
+            <span id="brushSizeVal" class="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">5px</span>
+          </div>
+          <input type="range" id="brushSize" min="1" max="40" value="5" class="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+        </div>
+      </div>
+
+      <!-- Action Buttons (Undo, Clear, Save) -->
+      <div class="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+        <button id="undoBtn" class="flex-1 py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> 되돌리기
+        </button>
+        <button id="clearBtn" class="flex-1 py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-trash-can"></i> 전체 지우기
+        </button>
+        <button id="savePngBtn" class="py-2 px-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5" title="이미지로 저장">
+          <i class="fa-solid fa-download"></i>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Center Canvas Area -->
+    <main class="flex-1 bg-slate-100 p-3 sm:p-6 flex items-center justify-center relative overflow-hidden">
+      <!-- Outer Canvas Container -->
+      <div id="canvasContainer" class="relative w-full h-full max-w-4xl max-h-[800px] bg-white rounded-3xl shadow-xl border border-slate-200/80 overflow-hidden flex items-center justify-center transition-all">
+        
+        <!-- Background Grid Container -->
+        <div id="gridOverlay" class="absolute inset-0 bg-grid-pattern pointer-events-none opacity-40"></div>
+
+        <!-- Trace Guide Layer (Template Canvas / SVG Background) -->
+        <canvas id="templateCanvas" class="absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300"></canvas>
+
+        <!-- User Drawing Canvas -->
+        <canvas id="drawCanvas" class="absolute inset-0 w-full h-full cursor-crosshair touch-none"></canvas>
+
+        <!-- Current Template Title Indicator -->
+        <div class="absolute top-4 left-4 bg-white/90 backdrop-blur border border-slate-200/80 px-3.5 py-1.5 rounded-full shadow-sm text-xs font-bold text-slate-700 pointer-events-none flex items-center gap-2">
+          <span id="currentTemplateIcon">🍎</span>
+          <span id="currentTemplateName">사과</span>
+        </div>
+
+        <!-- Canvas Floating Quick Helper Hint -->
+        <div class="absolute bottom-4 left-4 bg-slate-800/80 text-white backdrop-blur text-[11px] px-3 py-1.5 rounded-full shadow pointer-events-none hidden md:flex items-center gap-2">
+          <i class="fa-solid fa-hand-pointer text-amber-300"></i>
+          <span>마우스나 터치로 화면에 자유롭게 그려보세요!</span>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Modal 1: Gemini API Key Modal -->
+  <div id="apiModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-100">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <i class="fa-solid fa-key text-amber-500"></i> Gemini API 키 설정
+        </h3>
+        <button id="closeApiModalBtn" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+        AI 채점 기능을 이용하려면 Google Gemini API 키가 필요합니다. 입력된 키는 사용자의 브라우저(LocalStorage)에만 안전하게 저장됩니다.
+      </p>
+      <div class="mb-4">
+        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+      <div class="flex justify-between items-center text-xs text-slate-500 mb-5">
+        <span>키가 없으신가요?</span>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 font-bold hover:underline flex items-center gap-1">
+          Google AI Studio에서 발급받기 <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
+      </div>
+      <div class="flex gap-2">
+        <button id="saveApiKeyBtn" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-all">
+          저장하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: AI Evaluation Report Modal -->
+  <div id="aiModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex justify-between items-center pb-4 border-b border-slate-100 shrink-0">
+        <div class="flex items-center gap-2">
+          <div class="bg-indigo-100 text-indigo-600 p-2 rounded-xl">
+            <i class="fa-solid fa-award text-lg"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-slate-800 text-lg">AI 그림 평가 리포트</h3>
+            <p class="text-xs text-slate-400">Gemini Vision AI선생님이 채점했어요!</p>
+          </div>
+        </div>
+        <button id="closeAiModalBtn" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Loading State & Result) -->
+      <div class="py-6 overflow-y-auto flex-1">
+        <!-- Loading Spinner State -->
+        <div id="aiLoadingState" class="flex flex-col items-center justify-center py-8 gap-4">
+          <div class="relative w-16 h-16">
+            <div class="absolute inset-0 rounded-full border-4 border-indigo-200 animate-ping opacity-75"></div>
+            <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+          </div>
+          <p class="text-sm font-bold text-slate-700 animate-pulse">AI 선생님이 당신의 그림을 꼼꼼하게 살피는 중...</p>
+          <p class="text-xs text-slate-400">선 처리, 형태, 완성도를 종합 분석하고 있어요!</p>
+        </div>
+
+        <!-- Result Content State -->
+        <div id="aiResultState" class="hidden space-y-4">
+          <!-- Score Banner -->
+          <div class="bg-gradient-to-r from-amber-500 to-indigo-600 p-5 rounded-2xl text-white text-center shadow-lg relative overflow-hidden">
+            <div class="text-xs font-semibold uppercase tracking-wider text-amber-100 mb-1">최종 채점 점수</div>
+            <div class="text-5xl font-black tracking-tight" id="aiScoreText">95<span class="text-2xl font-normal text-amber-200">점</span></div>
+            <div id="aiTitleBadge" class="mt-2 inline-block bg-white/20 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-white">
+              🌟 훌륭한 라인 스케치!
+            </div>
+          </div>
+
+          <!-- Encouragement Message -->
+          <div class="bg-indigo-50 border border-indigo-100 p-3.5 rounded-2xl">
+            <h4 class="text-xs font-bold text-indigo-900 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-heart text-indigo-500"></i> AI 선생님의 따뜻한 한마디
+            </h4>
+            <p id="aiEncouragement" class="text-xs text-indigo-800 leading-relaxed">
+              밑그림의 형태를 아주 신중하게 잘 따라서 그려주셨네요!
+            </p>
+          </div>
+
+          <!-- Good Points -->
+          <div class="bg-emerald-50 border border-emerald-100 p-3.5 rounded-2xl">
+            <h4 class="text-xs font-bold text-emerald-900 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-thumbs-up text-emerald-500"></i> 참 잘했어요! (칭찬 요소)
+            </h4>
+            <p id="aiGoodPoints" class="text-xs text-emerald-800 leading-relaxed">
+              외곽선의 균형이 안정적이고 획의 끝처리가 깔끔합니다.
+            </p>
+          </div>
+
+          <!-- Tips for Improvement -->
+          <div class="bg-amber-50 border border-amber-100 p-3.5 rounded-2xl">
+            <h4 class="text-xs font-bold text-amber-900 mb-1 flex items-center gap-1.5">
+              <i class="fa-solid fa-lightbulb text-amber-500"></i> 더 발전하기 위한 꿀팁
+            </h4>
+            <p id="aiImprovement" class="text-xs text-amber-800 leading-relaxed">
+              곡선을 그릴 때 손목보다 팔 전체를 사용하여 크게 그려보세요.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-4 border-t border-slate-100 shrink-0 flex justify-end">
+        <button id="closeAiModalBtn2" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-xl text-sm transition-all">
+          확인하고 계속 연습하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    // --- Application State ---
+    const state = {
+      currentStage: 1, // 1: 45% opacity, 2: 15% opacity, 3: 0% opacity
+      currentTemplateKey: 'apple',
+      currentColor: '#0f172a',
+      brushSize: 5,
+      isEraser: false,
+      showGrid: true,
+      history: [], // For undo
+      apiKey: localStorage.getItem('gemini_api_key') || ''
+    };
+
+    // --- Templates Preset vector path definition ---
+    const templates = {
+      apple: {
+        name: '사과',
+        icon: '🍎',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2, r = Math.min(w, h) * 0.28;
+          ctx.beginPath();
+          // Apple Body
+          ctx.moveTo(cx, cy - r * 0.6);
+          ctx.bezierCurveTo(cx + r * 0.8, cy - r * 1.2, cx + r * 1.3, cy + r * 0.4, cx, cy + r);
+          ctx.bezierCurveTo(cx - r * 1.3, cy + r * 0.4, cx - r * 0.8, cy - r * 1.2, cx, cy - r * 0.6);
+          // Stem
+          ctx.moveTo(cx, cy - r * 0.6);
+          ctx.quadraticCurveTo(cx + 10, cy - r * 0.9, cx + 15, cy - r * 1.1);
+          // Leaf
+          ctx.moveTo(cx + 5, cy - r * 0.75);
+          ctx.quadraticCurveTo(cx + r * 0.4, cy - r * 1.1, cx + r * 0.3, cy - r * 0.6);
+          ctx.quadraticCurveTo(cx + r * 0.1, cy - r * 0.5, cx + 5, cy - r * 0.75);
+          ctx.stroke();
+        }
+      },
+      cat: {
+        name: '고양이',
+        icon: '🐱',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2 + 20, r = Math.min(w, h) * 0.22;
+          ctx.beginPath();
+          // Head
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          // Ears
+          ctx.moveTo(cx - r * 0.7, cy - r * 0.7);
+          ctx.lineTo(cx - r * 0.9, cy - r * 1.4);
+          ctx.lineTo(cx - r * 0.2, cy - r * 0.95);
+          
+          ctx.moveTo(cx + r * 0.7, cy - r * 0.7);
+          ctx.lineTo(cx + r * 0.9, cy - r * 1.4);
+          ctx.lineTo(cx + r * 0.2, cy - r * 0.95);
+          // Eyes
+          ctx.moveTo(cx - r * 0.35 + 8, cy - r * 0.1);
+          ctx.arc(cx - r * 0.35, cy - r * 0.1, 8, 0, Math.PI * 2);
+          ctx.moveTo(cx + r * 0.35 + 8, cy - r * 0.1);
+          ctx.arc(cx + r * 0.35, cy - r * 0.1, 8, 0, Math.PI * 2);
+          // Nose & Mouth
+          ctx.moveTo(cx - 6, cy + r * 0.2);
+          ctx.lineTo(cx + 6, cy + r * 0.2);
+          ctx.lineTo(cx, cy + r * 0.3);
+          ctx.closePath();
+          ctx.moveTo(cx, cy + r * 0.3);
+          ctx.quadraticCurveTo(cx - 12, cy + r * 0.5, cx - 20, cy + r * 0.35);
+          ctx.moveTo(cx, cy + r * 0.3);
+          ctx.quadraticCurveTo(cx + 12, cy + r * 0.5, cx + 20, cy + r * 0.35);
+          // Whiskers
+          ctx.moveTo(cx - r * 0.6, cy + 5); ctx.lineTo(cx - r * 1.2, cy - 5);
+          ctx.moveTo(cx - r * 0.6, cy + 15); ctx.lineTo(cx - r * 1.2, cy + 20);
+          ctx.moveTo(cx + r * 0.6, cy + 5); ctx.lineTo(cx + r * 1.2, cy - 5);
+          ctx.moveTo(cx + r * 0.6, cy + 15); ctx.lineTo(cx + r * 1.2, cy + 20);
+          ctx.stroke();
+        }
+      },
+      house: {
+        name: '집',
+        icon: '🏠',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2 + 20, bw = Math.min(w, h) * 0.45, bh = bw * 0.7;
+          ctx.beginPath();
+          // Body
+          ctx.rect(cx - bw/2, cy - bh/2, bw, bh);
+          // Roof
+          ctx.moveTo(cx - bw/2 - 20, cy - bh/2);
+          ctx.lineTo(cx, cy - bh/2 - bw * 0.4);
+          ctx.lineTo(cx + bw/2 + 20, cy - bh/2);
+          ctx.closePath();
+          // Door
+          ctx.rect(cx - bw * 0.15, cy + bh/2 - bh * 0.5, bw * 0.3, bh * 0.5);
+          // Window
+          ctx.rect(cx + bw * 0.15, cy - bh * 0.3, bw * 0.2, bw * 0.2);
+          ctx.moveTo(cx + bw * 0.25, cy - bh * 0.3); ctx.lineTo(cx + bw * 0.25, cy - bh * 0.3 + bw * 0.2);
+          ctx.moveTo(cx + bw * 0.15, cy - bh * 0.3 + bw * 0.1); ctx.lineTo(cx + bw * 0.35, cy - bh * 0.3 + bw * 0.1);
+          // Sun
+          ctx.moveTo(cx - bw * 0.8 + 20, cy - bh * 0.8);
+          ctx.arc(cx - bw * 0.8, cy - bh * 0.8, 20, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      },
+      car: {
+        name: '자동차',
+        icon: '🚗',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2, cw = Math.min(w, h) * 0.6, ch = cw * 0.35;
+          ctx.beginPath();
+          // Body bottom
+          ctx.roundRect(cx - cw/2, cy, cw, ch * 0.7, 15);
+          // Cabin
+          ctx.moveTo(cx - cw * 0.3, cy);
+          ctx.lineTo(cx - cw * 0.15, cy - ch * 0.7);
+          ctx.lineTo(cx + cw * 0.2, cy - ch * 0.7);
+          ctx.lineTo(cx + cw * 0.35, cy);
+          // Wheels
+          const wr = ch * 0.35;
+          ctx.moveTo(cx - cw * 0.25 + wr, cy + ch * 0.7);
+          ctx.arc(cx - cw * 0.25, cy + ch * 0.7, wr, 0, Math.PI * 2);
+          ctx.moveTo(cx + cw * 0.25 + wr, cy + ch * 0.7);
+          ctx.arc(cx + cw * 0.25, cy + ch * 0.7, wr, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      },
+      star: {
+        name: '별',
+        icon: '⭐',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2, outerR = Math.min(w, h) * 0.28, innerR = outerR * 0.4;
+          ctx.beginPath();
+          for (let i = 0; i < 5; i++) {
+            ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * outerR + cx, -Math.sin((18 + i * 72) * Math.PI / 180) * outerR + cy);
+            ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * innerR + cx, -Math.sin((54 + i * 72) * Math.PI / 180) * innerR + cy);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      },
+      tree: {
+        name: '나무',
+        icon: '🌲',
+        draw: (ctx, w, h) => {
+          const cx = w / 2, cy = h / 2 + 30, trW = Math.min(w, h) * 0.1, trH = Math.min(w, h) * 0.25;
+          ctx.beginPath();
+          // Trunk
+          ctx.rect(cx - trW/2, cy - trH/2, trW, trH);
+          // Foliage
+          const r = trH * 0.9;
+          ctx.moveTo(cx + r, cy - trH); ctx.arc(cx, cy - trH, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    };
+
+    // --- DOM Elements ---
+    const container = document.getElementById('canvasContainer');
+    const templateCanvas = document.getElementById('templateCanvas');
+    const drawCanvas = document.getElementById('drawCanvas');
+    const tCtx = templateCanvas.getContext('2d');
+    const dCtx = drawCanvas.getContext('2d');
+
+    const gridOverlay = document.getElementById('gridOverlay');
+    const toggleGridBtn = document.getElementById('toggleGridBtn');
+    const stageBadge = document.getElementById('stageBadge');
+    const stageDesc = document.getElementById('stageDesc');
+    const templateGrid = document.getElementById('templateGrid');
+    const randomTemplateBtn = document.getElementById('randomTemplateBtn');
+
+    const toolPencil = document.getElementById('toolPencil');
+    const toolEraser = document.getElementById('toolEraser');
+    const brushSizeInput = document.getElementById('brushSize');
+    const brushSizeVal = document.getElementById('brushSizeVal');
+    const customColorPicker = document.getElementById('customColorPicker');
+
+    const undoBtn = document.getElementById('undoBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const savePngBtn = document.getElementById('savePngBtn');
+    const downloadReadmeBtn = document.getElementById('downloadReadmeBtn');
+
+    const openApiModalBtn = document.getElementById('openApiModalBtn');
+    const apiModal = document.getElementById('apiModal');
+    const closeApiModalBtn = document.getElementById('closeApiModalBtn');
+    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+
+    const aiGradeBtn = document.getElementById('aiGradeBtn');
+    const aiModal = document.getElementById('aiModal');
+    const closeAiModalBtn = document.getElementById('closeAiModalBtn');
+    const closeAiModalBtn2 = document.getElementById('closeAiModalBtn2');
+    const aiLoadingState = document.getElementById('aiLoadingState');
+    const aiResultState = document.getElementById('aiResultState');
+
+    // --- Resize Canvas ---
+    function resizeCanvas() {
+      const rect = container.getBoundingClientRect();
+      
+      // Save current drawing image before resize
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = drawCanvas.width;
+      tempCanvas.height = drawCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (drawCanvas.width > 0 && drawCanvas.height > 0) {
+        tempCtx.drawImage(drawCanvas, 0, 0);
+      }
+
+      // Set new resolution
+      templateCanvas.width = rect.width;
+      templateCanvas.height = rect.height;
+      drawCanvas.width = rect.width;
+      drawCanvas.height = rect.height;
+
+      // Restore drawing
+      if (tempCanvas.width > 0) {
+        dCtx.drawImage(tempCanvas, 0, 0, rect.width, rect.height);
+      }
+
+      renderTemplate();
+    }
+
+    // --- Render Guide Template ---
+    function renderTemplate() {
+      const w = templateCanvas.width;
+      const h = templateCanvas.height;
+      tCtx.clearRect(0, 0, w, h);
+
+      // Opacity according to stage
+      let opacity = 0.45;
+      if (state.currentStage === 2) opacity = 0.15;
+      if (state.currentStage === 3) opacity = 0;
+
+      templateCanvas.style.opacity = opacity;
+
+      if (opacity > 0 && templates[state.currentTemplateKey]) {
+        tCtx.save();
+        tCtx.strokeStyle = '#475569';
+        tCtx.lineWidth = 4;
+        tCtx.lineCap = 'round';
+        tCtx.lineJoin = 'round';
+        tCtx.setLineDash([8, 8]); // Dashed line for tracing guide
+        templates[state.currentTemplateKey].draw(tCtx, w, h);
+        tCtx.restore();
+      }
+
+      // Update Template Name Label
+      const t = templates[state.currentTemplateKey];
+      if (t) {
+        document.getElementById('currentTemplateIcon').textContent = t.icon;
+        document.getElementById('currentTemplateName').textContent = t.name;
+      }
+    }
+
+    // --- Build Template Buttons ---
+    function initTemplateButtons() {
+      templateGrid.innerHTML = '';
+      Object.keys(templates).forEach(key => {
+        const item = templates[key];
+        const btn = document.createElement('button');
+        btn.className = `template-btn p-2 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all ${
+          state.currentTemplateKey === key
+            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-sm'
+            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+        }`;
+        btn.innerHTML = `<span class="text-base">${item.icon}</span><span>${item.name}</span>`;
+        btn.onclick = () => {
+          state.currentTemplateKey = key;
+          document.querySelectorAll('.template-btn').forEach(b => {
+            b.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700', 'shadow-sm');
+            b.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
+          });
+          btn.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700', 'shadow-sm');
+          renderTemplate();
+        };
+        templateGrid.appendChild(btn);
+      });
+    }
+
+    // --- Save State for Undo ---
+    function saveHistory() {
+      if (state.history.length >= 15) state.history.shift();
+      state.history.push(dCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height));
+    }
+
+    // --- Drawing Event Handlers ---
+    let isDrawing = false;
+    let lastX = 0, lastY = 0;
+
+    function getCoords(e) {
+      const rect = drawCanvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      saveHistory();
+      isDrawing = true;
+      const coords = getCoords(e);
+      lastX = coords.x;
+      lastY = coords.y;
+
+      // Draw single dot
+      dCtx.beginPath();
+      dCtx.arc(lastX, lastY, state.brushSize / 2, 0, Math.PI * 2);
+      dCtx.fillStyle = state.isEraser ? '#ffffff' : state.currentColor;
+      dCtx.fill();
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const coords = getCoords(e);
+
+      dCtx.beginPath();
+      dCtx.moveTo(lastX, lastY);
+      dCtx.lineTo(coords.x, coords.y);
+      dCtx.strokeStyle = state.isEraser ? '#ffffff' : state.currentColor;
+      dCtx.lineWidth = state.brushSize;
+      dCtx.lineCap = 'round';
+      dCtx.lineJoin = 'round';
+      dCtx.stroke();
+
+      lastX = coords.x;
+      lastY = coords.y;
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    // Attach Drawing Listeners
+    drawCanvas.addEventListener('mousedown', startDrawing);
+    drawCanvas.addEventListener('mousemove', draw);
+    drawCanvas.addEventListener('mouseup', stopDrawing);
+    drawCanvas.addEventListener('mouseleave', stopDrawing);
+
+    drawCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+    drawCanvas.addEventListener('touchmove', draw, { passive: false });
+    drawCanvas.addEventListener('touchend', stopDrawing);
+
+    // --- Stage Switching Logic ---
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      btn.onclick = () => {
+        const stage = parseInt(btn.dataset.stage);
+        state.currentStage = stage;
+
+        document.querySelectorAll('.stage-btn').forEach(b => {
+          b.className = 'stage-btn bg-white text-slate-600 font-semibold py-2 px-1 rounded-xl text-xs hover:bg-slate-100 transition-all flex flex-col items-center gap-1 border border-slate-200';
+        });
+        btn.className = 'stage-btn bg-indigo-500 text-white font-semibold py-2 px-1 rounded-xl text-xs shadow-sm hover:shadow transition-all flex flex-col items-center gap-1 border border-indigo-600';
+
+        if (stage === 1) {
+          stageBadge.textContent = '1단계 (선명)';
+          stageDesc.innerHTML = '💡 <strong>1단계:</strong> 밑그림이 잘 보여요. 위에 쓱쓱 따라서 연습해보세요!';
+        } else if (stage === 2) {
+          stageBadge.textContent = '2단계 (흐리게)';
+          stageDesc.innerHTML = '💡 <strong>2단계:</strong> 밑그림이 흐려졌어요! 모양을 기억하며 더 또렷하게 그려보세요.';
+        } else {
+          stageBadge.textContent = '3단계 (혼자서!)';
+          stageDesc.innerHTML = '💡 <strong>3단계:</strong> 밑그림 없이 내 힘으로 연상해서 그려보는 최종 도전 단계입니다!';
+        }
+
+        renderTemplate();
+      };
+    });
+
+    // --- Tools & Color Logic ---
+    toolPencil.onclick = () => {
+      state.isEraser = false;
+      toolPencil.className = 'tool-btn active bg-indigo-50 border-2 border-indigo-500 text-indigo-700 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all';
+      toolEraser.className = 'tool-btn bg-white border border-slate-200 text-slate-600 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all';
+    };
+
+    toolEraser.onclick = () => {
+      state.isEraser = true;
+      toolEraser.className = 'tool-btn active bg-indigo-50 border-2 border-indigo-500 text-indigo-700 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all';
+      toolPencil.className = 'tool-btn bg-white border border-slate-200 text-slate-600 font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-2 hover:bg-slate-50 transition-all';
+    };
+
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.onclick = () => {
+        state.currentColor = btn.dataset.color;
+        state.isEraser = false;
+        toolPencil.click();
+        document.querySelectorAll('.color-btn').forEach(b => b.classList.replace('border-slate-800', 'border-transparent'));
+        btn.classList.replace('border-transparent', 'border-slate-800');
+      };
+    });
+
+    customColorPicker.oninput = (e) => {
+      state.currentColor = e.target.value;
+      state.isEraser = false;
+      toolPencil.click();
+    };
+
+    brushSizeInput.oninput = (e) => {
+      state.brushSize = parseInt(e.target.value);
+      brushSizeVal.textContent = state.brushSize + 'px';
+    };
+
+    // Grid Toggle
+    toggleGridBtn.onclick = () => {
+      state.showGrid = !state.showGrid;
+      gridOverlay.style.display = state.showGrid ? 'block' : 'none';
+      toggleGridBtn.classList.toggle('bg-slate-100', state.showGrid);
+    };
+
+    // Random Template
+    randomTemplateBtn.onclick = () => {
+      const keys = Object.keys(templates);
+      const randomKey = keys[Math.floor(Math.random() * keys.length)];
+      const targetBtn = Array.from(templateGrid.children)[keys.indexOf(randomKey)];
+      if (targetBtn) targetBtn.click();
+    };
+
+    // Undo & Clear & Save PNG
+    undoBtn.onclick = () => {
+      if (state.history.length > 0) {
+        const lastState = state.history.pop();
+        dCtx.putImageData(lastState, 0, 0);
+      }
+    };
+
+    clearBtn.onclick = () => {
+      saveHistory();
+      dCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    };
+
+    savePngBtn.onclick = () => {
+      // Export merged drawing canvas
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = drawCanvas.width;
+      exportCanvas.height = drawCanvas.height;
+      const eCtx = exportCanvas.getContext('2d');
+      eCtx.fillStyle = '#ffffff';
+      eCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+      eCtx.drawImage(drawCanvas, 0, 0);
+
+      const link = document.createElement('a');
+      link.download = `my-drawing-${state.currentTemplateKey}.png`;
+      link.href = exportCanvas.toDataURL('image/png');
+      link.click();
+    };
+
+    // --- API Key Modal Logic ---
+    openApiModalBtn.onclick = () => {
+      apiKeyInput.value = state.apiKey;
+      apiModal.classList.remove('hidden');
+    };
+    closeApiModalBtn.onclick = () => apiModal.classList.add('hidden');
+    saveApiKeyBtn.onclick = () => {
+      state.apiKey = apiKeyInput.value.trim();
+      localStorage.setItem('gemini_api_key', state.apiKey);
+      apiModal.classList.add('hidden');
+      alert('Gemini API 키가 성공적으로 저장되었습니다!');
+    };
+
+    // --- README Download Functionality ---
+    downloadReadmeBtn.onclick = () => {
+      const readmeContent = `# 🎨 그림 연습 및 AI 채점 도우미 (Drawing Practice & AI Evaluator)
+
+사용자가 그림을 더 쉽고 즐겁게 익힐 수 있도록 제작된 단계별 밑그림 연습 및 Gemini AI 채점 웹앱입니다.
+
+---
+
+## 🌟 주요 기능 (Key Features)
+
+### 1. 🎯 3단계 학습 모드 (3-Stage Practice System)
+- **1단계 (선명)**: 선명한 점선 밑그림(투명도 45%)을 따라서 손쉽게 시작합니다.
+- **2단계 (흐리게)**: 흐릿한 밑그림(투명도 15%)으로 스케치 라인을 스스로 기억해보는 연습입니다.
+- **3단계 (혼자서)**: 밑그림 없이 완전히 자립해서 그림을 완성해봅니다.
+
+### 2. 🎨 수제 선화 템플릿 제공
+- 사과, 고양이, 집, 자동차, 별, 나무 등 귀여운 베이직 드로잉 카테고리 포함.
+- 버튼 클릭 한 번으로 무작위 주제 추천.
+
+### 3. 🤖 Gemini Vision AI 기반 채점 시스템
+- 완성한 그림과 주제 데이터를 기반으로 **Gemini 2.5 Flash** 모델이 채점 진행.
+- **100점 만점 채점 score**, **친절한 칭찬 요소**, **성장을 돕는 꿀팁**, **따뜻한 격려 메시지**를 담은 리포트 모달 생성.
+
+### 4. ✏️ 풍부한 그리기 및 편의 도구
+- 마우스 및 터치(스마트폰/태블릿) 완벽 대응.
+- 연필/지우개 전환, 색상 팔레트 및 커스텀 컬러 피커, 선 굵기 조절(1~40px).
+- **되돌리기(Undo)**, **전체 지우기**, **PNG 이미지 저장** 기능 지원.
+- 격자(Grid) 보조선 On/Off.
+
+---
+
+## 🚀 사용법 (How to Use)
+
+1. 오른쪽 상단 **'API 키 설정'** 버튼을 눌러 Gemini API Key를 입력 후 저장합니다.
+2. 좌측 메뉴에서 **연습 단계(1~3단계)** 및 **밑그림 주제**를 선택합니다.
+3. 캔버스 위에 자유롭게 선을 그려 그림을 완성합니다.
+4. 상단의 **'AI 채점 받기'** 버튼을 누르면 AI 선생님의 친절한 다정 피백과 점수를 확인할 수 있습니다!
+`;
+
+      const blob = new Blob([readmeContent], { type: 'text/markdown;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'README.md';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    // --- AI Grading Logic via Gemini Vision API ---
+    aiGradeBtn.onclick = async () => {
+      if (!state.apiKey) {
+        alert('AI 채점 기능을 이용하려면 먼저 Gemini API 키를 등록해주세요!');
+        openApiModalBtn.click();
+        return;
+      }
+
+      // Show Modal & Set Loading state
+      aiModal.classList.remove('hidden');
+      aiLoadingState.classList.remove('hidden');
+      aiResultState.classList.add('hidden');
+
+      try {
+        // Create white-backed PNG image for API input
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = drawCanvas.width;
+        exportCanvas.height = drawCanvas.height;
+        const eCtx = exportCanvas.getContext('2d');
+        eCtx.fillStyle = '#ffffff';
+        eCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        eCtx.drawImage(drawCanvas, 0, 0);
+
+        const base64ImageData = exportCanvas.toDataURL('image/png').split(',')[1];
+        const templateName = templates[state.currentTemplateKey]?.name || '그림';
+
+        // Construct System & User Prompt for Structured Evaluation
+        const systemPrompt = `당신은 초보자를 격려하고 친절하게 가르쳐주는 다정한 AI 미술 선생님입니다.
+사용자가 제출한 그림은 '${templateName}' 주제를 따라 그린 것이며, 현재 연습 단계는 ${state.currentStage}단계입니다.
+그림의 선 완성도, 형태 유사성, 정성을 감안하여 다정하고 긍정적으로 채점해주세요.
+반드시 제공된 JSON 구조로만 답해야 합니다.`;
+
+        const userPrompt = `제출된 그림을 평가하고 다음 JSON 형식으로 응답해주세요:
+{
+  "score": (0~100 사이 정수),
+  "title": (특색있는 예쁜 칭찬 칭호, 예: '꿈나무 아티스트', '안정적인 라인 드로잉'),
+  "encouragement": (다정하고 상스런 총평과 따뜻한 격려 2~3문장),
+  "goodPoints": (그림에서 특히 잘한 점 1~2문장),
+  "improvement": (다음 그림을 그릴 때 도움이 될 실용적인 피드백 1~2문장)
+}`;
+
+        const payload = {
+          contents: [{
+            role: "user",
+            parts: [
+              { text: userPrompt },
+              {
+                inlineData: {
+                  mimeType: "image/png",
+                  data: base64ImageData
+                }
+              }
+            ]
+          }],
+          systemInstruction: {
+            parts: [{ text: systemPrompt }]
+          },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                score: { type: "INTEGER" },
+                title: { type: "STRING" },
+                encouragement: { type: "STRING" },
+                goodPoints: { type: "STRING" },
+                improvement: { type: "STRING" }
+              },
+              required: ["score", "title", "encouragement", "goodPoints", "improvement"]
+            }
+          }
+        };
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${state.apiKey}`;
+
+        // Exponential backoff fetch function
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+          try {
+            const res = await fetch(url, options);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return await res.json();
+          } catch (err) {
+            if (retries > 0) {
+              await new Promise(r => setTimeout(r, delay));
+              return fetchWithRetry(url, options, retries - 1, delay * 2);
+            }
+            throw err;
+          }
+        }
+
+        const result = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const jsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!jsonText) throw new Error("유효한 응답을 받지 못했습니다.");
+
+        const report = JSON.parse(jsonText);
+
+        // Populate Result Modal
+        document.getElementById('aiScoreText').innerHTML = `${report.score}<span class="text-2xl font-normal text-amber-200">점</span>`;
+        document.getElementById('aiTitleBadge').textContent = `🌟 ${report.title}`;
+        document.getElementById('aiEncouragement').textContent = report.encouragement;
+        document.getElementById('aiGoodPoints').textContent = report.goodPoints;
+        document.getElementById('aiImprovement').textContent = report.improvement;
+
+        // Show Result
+        aiLoadingState.classList.add('hidden');
+        aiResultState.classList.remove('hidden');
+
+      } catch (err) {
+        console.error(err);
+        alert('AI 채점 중 오류가 발생했습니다. API 키를 확인하시거나 잠시 후 다시 시도해주세요.');
+        aiModal.classList.add('hidden');
+      }
+    };
+
+    closeAiModalBtn.onclick = () => aiModal.classList.add('hidden');
+    closeAiModalBtn2.onclick = () => aiModal.classList.add('hidden');
+
+    // --- Init App ---
+    window.onload = () => {
+      initTemplateButtons();
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+    };
+  </script>
+</body>
+</html>
